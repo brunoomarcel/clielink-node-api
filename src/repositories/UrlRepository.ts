@@ -5,14 +5,28 @@ const prisma = new PrismaClient();
 
 const urlDatabase = new Map<string, string>(); // shortId -> originalUrl
 
-export async function createShortUrl(originalUrl: string): Promise<string> {
-  const shortId = generateShortId();
-  urlDatabase.set(shortId, originalUrl);
-  return `${process.env.BASE_URL || 'http://localhost:3000'}/${shortId}`;
+export async function createShortCode(originalUrl: string): Promise<string> {
+  const shortCode = generateShortId();
+
+  await prisma.url.create({
+    data: {
+      originalUrl,
+      shortCode
+    }
+  });
+
+  return shortCode;
 }
 
-export async function findOriginalUrl(shortId: string): Promise<string | undefined> {
-  return urlDatabase.get(shortId);
+
+export async function findOriginalUrl(shortId: string): Promise<string | null> {
+  const found = await prisma.url.findUnique({
+    where: {
+      shortCode: shortId
+    }
+  });
+
+  return found?.originalUrl || null;
 }
 
 export async function listAllUrls() {
